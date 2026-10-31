@@ -14,6 +14,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="camera" options={{ animation: 'fade' }} />
         <Stack.Screen name="verification" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="withdraw" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       </SessionGate>

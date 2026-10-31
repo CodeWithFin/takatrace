@@ -3,9 +3,6 @@ import {
   Text,
   ScrollView,
   RefreshControl,
-  Modal,
-  TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
 import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
@@ -16,7 +13,6 @@ import { walletApi, scanApi } from '@/lib/api';
 import { WalletCard } from '@/components/ui/WalletCard';
 import { ScanListItem } from '@/components/ui/ScanListItem';
 import { CameraFAB } from '@/components/ui/CameraFAB';
-import { Button } from '@/components/ui/Button';
 import { formatKES } from '@takatrace/shared';
 
 export default function HomeScreen() {
@@ -25,14 +21,6 @@ export default function HomeScreen() {
   const { recentScans, setScans } = useScanStore();
 
   const [refreshing, setRefreshing] = useState(false);
-  const [withdrawModal, setWithdrawModal] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState(0);
-  const [withdrawing, setWithdrawing] = useState(false);
-  const [withdrawResult, setWithdrawResult] = useState<{
-    success?: boolean;
-    receipt?: string;
-    error?: string;
-  } | null>(null);
 
   const loadData = async () => {
     try {
@@ -55,24 +43,7 @@ export default function HomeScreen() {
     setRefreshing(false);
   };
 
-  const openWithdraw = () => {
-    setWithdrawAmount(user?.balance ?? 0);
-    setWithdrawResult(null);
-    setWithdrawModal(true);
-  };
-
-  const confirmWithdraw = async () => {
-    setWithdrawing(true);
-    try {
-      const res = await walletApi.withdraw(withdrawAmount);
-      setWithdrawResult({ success: true, receipt: res.data.receipt });
-      updateBalance(res.data.new_balance);
-    } catch (err: any) {
-      setWithdrawResult({ success: false, error: err.message });
-    } finally {
-      setWithdrawing(false);
-    }
-  };
+  const openWithdraw = () => router.push('/withdraw');
 
   const balance = user?.balance ?? 0;
 
@@ -156,85 +127,6 @@ export default function HomeScreen() {
 
       {/* FAB */}
       <CameraFAB onPress={() => router.push('/camera')} />
-
-      {/* Withdraw Modal */}
-      <Modal
-        visible={withdrawModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setWithdrawModal(false)}
-      >
-        <TouchableOpacity
-          className="flex-1 bg-black/60"
-          activeOpacity={1}
-          onPress={() => !withdrawing && setWithdrawModal(false)}
-        />
-        <View className="absolute bottom-0 left-0 right-0 bg-[#141414] rounded-t-3xl p-6">
-          {!withdrawResult ? (
-            <>
-              <View className="w-12 h-1 bg-[#2A2A2A] rounded-full self-center mb-6" />
-              <Text className="text-[#F5F5F5] text-2xl font-bold mb-1">Withdraw Funds</Text>
-              <Text className="text-[#7A7A7A] text-base mb-6">
-                Send to M-Pesa{' '}
-                <Text className="text-[#F5F5F5] font-semibold">{user?.phone_number}</Text>
-              </Text>
-
-              <View className="bg-[#1C1C1C] rounded-2xl p-5 mb-6">
-                <Text className="text-[#7A7A7A] text-sm mb-1">Amount</Text>
-                <Text className="text-[#F5F5F5] text-4xl font-bold">
-                  {formatKES(withdrawAmount)}
-                </Text>
-              </View>
-
-              <Button
-                label={withdrawing ? 'Sending…' : `Confirm — ${formatKES(withdrawAmount)}`}
-                onPress={confirmWithdraw}
-                loading={withdrawing}
-                disabled={balance <= 0}
-                size="lg"
-              />
-              <Button
-                label="Cancel"
-                onPress={() => setWithdrawModal(false)}
-                variant="ghost"
-                size="md"
-              />
-            </>
-          ) : (
-            <>
-              <View className="w-12 h-1 bg-[#2A2A2A] rounded-full self-center mb-6" />
-              {withdrawResult.success ? (
-                <View className="items-center py-4">
-                  <Text style={{ fontSize: 64 }}>✅</Text>
-                  <Text className="text-[#F5F5F5] text-2xl font-bold mt-4 mb-2">
-                    Transfer Sent!
-                  </Text>
-                  <Text className="text-[#7A7A7A] text-center mb-2">
-                    {formatKES(withdrawAmount)} sent to {user?.phone_number}
-                  </Text>
-                  <Text className="text-[#7A7A7A] text-sm">
-                    Receipt: {withdrawResult.receipt}
-                  </Text>
-                </View>
-              ) : (
-                <View className="items-center py-4">
-                  <Text style={{ fontSize: 64 }}>❌</Text>
-                  <Text className="text-[#F5F5F5] text-2xl font-bold mt-4 mb-2">
-                    Transfer Failed
-                  </Text>
-                  <Text className="text-red-400 text-center">{withdrawResult.error}</Text>
-                </View>
-              )}
-              <Button
-                label="Close"
-                onPress={() => setWithdrawModal(false)}
-                variant="secondary"
-                size="lg"
-              />
-            </>
-          )}
-        </View>
-      </Modal>
     </View>
   );
 }
